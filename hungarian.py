@@ -11,7 +11,7 @@ import copy
 # Only works on small grids
 # used for testing my solution
 def bruteForceMaximize(grid, debug=False):
-    possible_column_indexes = itertools.permutations(range(len(grid)))
+    possible_column_indexes = itertools.permutations(xrange(len(grid)))
     max_sum = None
     max_positions = []
     for column_indexes in possible_column_indexes:
@@ -36,42 +36,42 @@ def minOfRow(row, grid):
 # For each row, find the min in that row, and subtract it from every cell in
 # that row 
 def subtractRowMinFromEachRow(grid):
-    for r in range(len(grid)):
+    for r in xrange(len(grid)):
         min = minOfRow(r, grid)
-        for c in range(len(grid[r])):
+        for c in xrange(len(grid[r])):
             grid[r][c] -= min
 
 # Step 2
 # For each uncovered zero in the grid, add a star to it and then cover that row and column.
 # But then uncover all the rows and cols
-def starZeros(grid, grid_info, row_info, col_info):
-    for r in range(len(grid)):
-        for c in range(len(grid[r])):
-            if grid[r][c] == 0 and row_info[r]['covered'] == False and col_info[c]['covered'] == False:
+def starZeros(grid, grid_info, row_cover, col_cover):
+    for r in xrange(len(grid)):
+        for c in xrange(len(grid[r])):
+            if grid[r][c] == 0 and row_cover[r] == False and col_cover[c] == False:
                 grid_info[r][c] = 1
-                row_info[r]['covered'] = col_info[c]['covered'] = True
+                row_cover[r] = col_cover[c] = True
 
-    uncoverAll(row_info, col_info)
+    uncoverAll(row_cover, col_cover)
 
 # Step 3
 # Cover all the columns with starred zeros, and return the number of covered columns
-def coverColsWithStarredZeros(grid, grid_info, col_info):
-    for r in range(len(grid)):
-        for c in range(len(grid[r])):
+def coverColsWithStarredZeros(grid, grid_info, col_cover):
+    for r in xrange(len(grid)):
+        for c in xrange(len(grid[r])):
             if grid_info[r][c] == 1:
                 # cover the column
-                col_info[c]['covered'] = True
+                col_cover[c] = True
 
     covered_cnt = 0
-    for c in range(len(col_info)):
-        if col_info[c]['covered']:
+    for c in xrange(len(col_cover)):
+        if col_cover[c]:
             covered_cnt += 1
 
     return covered_cnt
 
 # Return the column of a starred zero in the specified row, or -1
 def isStarInRow(row, grid, grid_info):
-    for c in range(len(grid[row])):
+    for c in xrange(len(grid[row])):
         if grid_info[row][c] == 1:
             return c
 
@@ -79,17 +79,17 @@ def isStarInRow(row, grid, grid_info):
 
 # Return the row of a starred zero in the specified column, or -1
 def isStarInCol(col, grid, grid_info):
-    for r in range(len(grid)):
+    for r in xrange(len(grid)):
         if grid_info[r][col] == 1:
             return r
 
     return -1
 
 # Find an uncovered zero, and return it's row and column (-1 returned if one is not present)
-def findZero(grid, grid_info, row_info, col_info):
-    for r in range(len(grid)):
-        for c in range(len(grid[r])):
-            if grid[r][c] == 0 and row_info[r]['covered'] == False and col_info[c]['covered'] == False:
+def findZero(grid, grid_info, row_cover, col_cover):
+    for r in xrange(len(grid)):
+        for c in xrange(len(grid[r])):
+            if grid[r][c] == 0 and row_cover[r] == False and col_cover[c] == False:
                 return r, c
 
     return -1, -1
@@ -98,9 +98,9 @@ def findZero(grid, grid_info, row_info, col_info):
 # Keep finding non covered zeros, prime them, and see if there is a starred zero in that row (that you found the non covered zero in).
 # If there is no starred zero in that row, return the row and column you just visited, otherwise mark the row as covered, and the column
 # you saw the starred zero in as covered
-def primeZeros(grid, grid_info, row_info, col_info):
+def primeZeros(grid, grid_info, row_cover, col_cover):
     while True:
-        r, c = findZero(grid, grid_info, row_info, col_info)
+        r, c = findZero(grid, grid_info, row_cover, col_cover)
         if r == -1:
             return False
 
@@ -109,15 +109,15 @@ def primeZeros(grid, grid_info, row_info, col_info):
         if col_of_star == -1:
             return {'row' : r, 'col' : c}
 
-        row_info[r]['covered'] = True
-        col_info[col_of_star]['covered'] = False
+        row_cover[r] = True
+        col_cover[col_of_star] = False
 
 # Find the smallest number in the grid that is not covered
-def findSmallestUncoveredValue(grid, grid_info, row_info, col_info):
+def findSmallestUncoveredValue(grid, grid_info, row_cover, col_cover):
     min_ = None
-    for r in range(len(grid)):
-        for c in range(len(grid[r])):
-            if row_info[r]['covered'] == 0 and col_info[c]['covered'] == 0 and (min_ == None or grid[r][c] < min_):
+    for r in xrange(len(grid)):
+        for c in xrange(len(grid[r])):
+            if row_cover[r] == 0 and col_cover[c] == 0 and (min_ == None or grid[r][c] < min_):
                 min_ = grid[r][c]
 
     return min_
@@ -125,12 +125,12 @@ def findSmallestUncoveredValue(grid, grid_info, row_info, col_info):
 # step 6
 # For each number in the grid, if it's row is covered, add the min to its value. 
 # If the column is not covered, then subtract the min for it
-def applySmallestValue(grid, grid_info, row_info, col_info, min_):
-    for r in range(len(grid)):
-        for c in range(len(grid[0])):
-            if row_info[r]['covered']:
+def applySmallestValue(grid, grid_info, row_cover, col_cover, min_):
+    for r in xrange(len(grid)):
+        for c in xrange(len(grid[0])):
+            if row_cover[r]:
                 grid[r][c] += min_
-            if not col_info[c]['covered']:
+            if not col_cover[c]:
                 grid[r][c] -= min_
 
 
@@ -146,22 +146,22 @@ def augmentPath(grid, grid_info, path):
 
 # Remove the prime from every primed item in the path
 def unprimeAll(grid_info):
-    for r in range(len(grid_info)):
-        for c in range(len(grid_info[r])):
+    for r in xrange(len(grid_info)):
+        for c in xrange(len(grid_info[r])):
             if grid_info[r][c] == 2:
                 grid_info[r][c] = 0
 
 # Uncover all the rows and cols
-def uncoverAll(row_info, col_info):
-    for i in range(len(row_info)):
-        row_info[i]['covered'] = False
-    for i in range(len(col_info)):
-        col_info[i]['covered'] = False
+def uncoverAll(row_cover, col_cover):
+    for i in xrange(len(row_cover)):
+        row_cover[i] = False
+    for i in xrange(len(col_cover)):
+        col_cover[i] = False
 
 
 # Return the column of a primed zero in the specified row, or -1
 def isPrimeInRow(row, grid, grid_info):
-    for c in range(len(grid[row])):
+    for c in xrange(len(grid[row])):
         if grid_info[row][c] == 2:
             return c
 
@@ -169,7 +169,7 @@ def isPrimeInRow(row, grid, grid_info):
 
 # Step 5
 # I really don't want to explain this. I have no idea what its purpose is
-def pathStuff(grid, grid_info, row_info, col_info, pair):
+def pathStuff(grid, grid_info, row_cover, col_cover, pair):
     path = []
     path.append(pair)
     done = False
@@ -185,12 +185,12 @@ def pathStuff(grid, grid_info, row_info, col_info, pair):
 
     augmentPath(grid, grid_info, path)
     unprimeAll(grid_info)
-    uncoverAll(row_info, col_info)
+    uncoverAll(row_cover, col_cover)
 
 def printGrid(grid, grid_info):
-    for r in range(len(grid)):
+    for r in xrange(len(grid)):
         s = []
-        for c in range(len(grid[r])):
+        for c in xrange(len(grid[r])):
             starred = True if grid_info[r][c] == 1 else False
             primed = True if grid_info[r][c] == 2 else False
             n = grid[r][c]
@@ -213,17 +213,17 @@ def normalize(grid):
         if max_of_row > max_:
             max_ = max_of_row
 
-    for r in range(len(grid)):
-        for c in range(len(grid[r])):
+    for r in xrange(len(grid)):
+        for c in xrange(len(grid[r])):
             grid[r][c] = max_ - grid[r][c]
     return max_
 
 # Transpose a grid
 def transpose(grid):
     new_grid = []
-    for c in range(len(grid[0])):
+    for c in xrange(len(grid[0])):
         new_grid.append([])
-        for r in range(len(grid)):
+        for r in xrange(len(grid)):
             new_grid[c].append(grid[r][c])
 
     return new_grid
@@ -232,44 +232,34 @@ def transpose(grid):
 # Returns a matrix where an item is set to 1 if that row, col is part of the extrema
 def assign(working_copy):
     grid = working_copy
-
-    row_info = []
-    for r in range(len(grid)):
-        row_info.append({"covered" : False})
-
-    col_info = [] #[None]*len(working_copy[0])
-    for c in range(len(grid[0])):
-        col_info.append({"covered" : False})
-
+    row_cover = [False]*len(grid)
+    col_cover = [False]*len(working_copy[0])
     grid_info = []
-    for r in range(len(grid)):
-        grid_info.append([])
-        for c in range(len(working_copy[r])):
-            grid_info[r].append(0)
+    grid_info = [[0]*len(grid[0]) for i in grid]
             
     # Step 1
     subtractRowMinFromEachRow(grid)
     # Step 2
-    starZeros(grid, grid_info, row_info, col_info)
+    starZeros(grid, grid_info, row_cover, col_cover)
     cover = True
     while True:
         if cover:
             # step 3
-            covered_cnt = coverColsWithStarredZeros(grid, grid_info, col_info)
+            covered_cnt = coverColsWithStarredZeros(grid, grid_info, col_cover)
             if covered_cnt >= min(len(grid), len(grid[0])):
                 break
     
         # step 4
-        pair = primeZeros(grid, grid_info, row_info, col_info)
+        pair = primeZeros(grid, grid_info, row_cover, col_cover)
         if pair:
             # step 5
-            pathStuff(grid, grid_info, row_info, col_info, pair)
+            pathStuff(grid, grid_info, row_cover, col_cover, pair)
             # go to step 3
             cover = True
         else:
             # step 6
-            n = findSmallestUncoveredValue(grid, grid_info, row_info, col_info)
-            applySmallestValue(grid, grid_info, row_info, col_info, n)
+            n = findSmallestUncoveredValue(grid, grid_info, row_cover, col_cover)
+            applySmallestValue(grid, grid_info, row_cover, col_cover, n)
             # goto step 4
             cover = False
 
@@ -294,8 +284,8 @@ def prepare(in_grid, method="max"):
 # sum up the starred items in the grid
 def sum(grid, grid_info):
     sum = 0
-    for r in range(len(grid_info)):
-        for c in range(len(grid_info[r])):
+    for r in xrange(len(grid_info)):
+        for c in xrange(len(grid_info[r])):
             if grid_info[r][c] == 1:
                 sum += grid[r][c]
 
@@ -310,24 +300,24 @@ def listPoints(grid_info):
         grid_info = transpose(grid_info)
 
     points = []
-    for r in range(len(grid_info)):
-        for c in range(len(grid_info[r])):
+    for r in xrange(len(grid_info)):
+        for c in xrange(len(grid_info[r])):
             if grid_info[r][c] == 1:
                 points.append((r, c))
 
     return points
 
+# Prepares the matrix for assignment, performs the assignment, and returns the extrema and list of points
+# where the extrema occur
 def solve(grid, method="min"):
     grid, working_copy = prepare(grid, method)
     grid_info = assign(working_copy)
-    sum_ = sum(grid, grid_info)
-    return sum_, listPoints(grid_info)
-
+    #sum_ = sum(grid, grid_info)
+    return sum(grid, grid_info), listPoints(grid_info)
 
 # convience methods
-def minimize(in_grid):
+def minimize(grid):
     return solve(grid, "min") 
-
 def maximize(grid):
     return solve(grid, "max") 
     
@@ -336,11 +326,11 @@ if __name__ == '__main__':
     try:
         tests = int(sys.argv[1])
         size = int(sys.argv[2])
-        for i in range(tests):
+        for i in xrange(tests):
             grid = []
-            for r in range(size):
+            for r in xrange(size):
                 grid.append([])
-                for c in range(size):
+                for c in xrange(size):
                     grid[r].append(random.randint(0, 20))
 
             r1 = maximize(grid)[0]
