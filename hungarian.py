@@ -1,45 +1,15 @@
-#!/usr/bin/python
 # This file implements the hungarian maximization algorithm as described here: 
 # http://csclab.murraystate.edu/bob.pilgrim/445/munkres.html
-import sys
-import re
-import itertools
-import random
 import copy
-
-# Brute force solution checker
-# Only works on small grids
-# used for testing my solution
-def bruteForceMaximize(grid, debug=False):
-    possible_column_indexes = itertools.permutations(xrange(len(grid)))
-    max_sum = None
-    max_positions = []
-    for column_indexes in possible_column_indexes:
-        current_sum = 0
-        current_positions = []
-        for row, col in enumerate(column_indexes):
-            current_sum += grid[row][col]
-            current_positions.append("(%d, %d)" % (row, col))
-        if max_sum == None or current_sum > max_sum:
-            max_sum = current_sum
-            max_positions = current_positions
-
-    if debug:
-        for position in max_positions:
-            print position
-    return max_sum
-
-def minOfRow(row, grid):
-    return min(grid[row])
 
 # Step 1
 # For each row, find the min in that row, and subtract it from every cell in
 # that row 
 def subtractRowMinFromEachRow(grid):
     for r in xrange(len(grid)):
-        min = minOfRow(r, grid)
+        min_ = min(grid[r])
         for c in xrange(len(grid[r])):
-            grid[r][c] -= min
+            grid[r][c] -= min_
 
 # Step 2
 # For each uncovered zero in the grid, add a star to it and then cover that row and column.
@@ -133,7 +103,6 @@ def applySmallestValue(grid, grid_info, row_cover, col_cover, min_):
             if not col_cover[c]:
                 grid[r][c] -= min_
 
-
 # Toggle the star in every point in the path
 def augmentPath(grid, grid_info, path):
     for pair in path:
@@ -157,7 +126,6 @@ def uncoverAll(row_cover, col_cover):
         row_cover[i] = False
     for i in xrange(len(col_cover)):
         col_cover[i] = False
-
 
 # Return the column of a primed zero in the specified row, or -1
 def isPrimeInRow(row, grid, grid_info):
@@ -230,12 +198,15 @@ def transpose(grid):
 
 # The actual hungarian-munkres algorthim
 # Returns a matrix where an item is set to 1 if that row, col is part of the extrema
-def assign(working_copy):
-    grid = working_copy
-    row_cover = [False]*len(grid)
-    col_cover = [False]*len(working_copy[0])
-    grid_info = []
+def assign(grid):
+    # all rows and cols start off uncovered
+    row_cover = [False]*len(grid) 
+    col_cover = [False]*len(grid[0])
+    # all numbers are non starred, and non primed
+    # 1 means it's starred, 2 means it's primed
     grid_info = [[0]*len(grid[0]) for i in grid]
+    # exit when the number of covered zeros equals this
+    exit_condition = min(len(grid), len(grid[0])) 
             
     # Step 1
     subtractRowMinFromEachRow(grid)
@@ -246,7 +217,7 @@ def assign(working_copy):
         if cover:
             # step 3
             covered_cnt = coverColsWithStarredZeros(grid, grid_info, col_cover)
-            if covered_cnt >= min(len(grid), len(grid[0])):
+            if covered_cnt >= exit_condition:
                 break
     
         # step 4
@@ -267,19 +238,19 @@ def assign(working_copy):
 
 # Transpose the matrix (if it has more rows than cols)
 # And, if the method is maximization, perform the subtraction rule (the normalization function)
-def prepare(in_grid, method="max"):
-    rows = len(in_grid)
-    cols = len(in_grid[0])
+def prepare(grid, method="max"):
+    rows = len(grid)
+    cols = len(grid[0])
     # The algo requires that the number of cols >= the number of rows
     if rows > cols:
-        in_grid = transpose(in_grid)
-    working_copy = copy.deepcopy(in_grid)
+        grid = transpose(grid)
+    working_copy = copy.deepcopy(grid)
 
     # Make the adjustments for maximization 
     if method == "max":
         normalize(working_copy)
 
-    return in_grid, working_copy
+    return grid, working_copy
 
 # sum up the starred items in the grid
 def sum(grid, grid_info):
@@ -312,7 +283,6 @@ def listPoints(grid_info):
 def solve(grid, method="min"):
     grid, working_copy = prepare(grid, method)
     grid_info = assign(working_copy)
-    #sum_ = sum(grid, grid_info)
     return sum(grid, grid_info), listPoints(grid_info)
 
 # convience methods
@@ -321,28 +291,3 @@ def minimize(grid):
 def maximize(grid):
     return solve(grid, "max") 
     
-# Pass the name of a file, or two integers representing the number of tests to perform, and the size of the grid
-if __name__ == '__main__':
-    try:
-        tests = int(sys.argv[1])
-        size = int(sys.argv[2])
-        for i in xrange(tests):
-            grid = []
-            for r in xrange(size):
-                grid.append([])
-                for c in xrange(size):
-                    grid[r].append(random.randint(0, 20))
-
-            r1 = maximize(grid)[0]
-            r2 = bruteForceMaximize(grid)
-            print r1, r2
-            if r1 != r2:
-                print "failed"
-                exit(1)
-
-    except ValueError:
-        grid = open(sys.argv[1], 'r').read().strip()
-        grid = [[float(x) for x in re.split("\s+", line)] for line in grid.split("\n")]
-        r1 = maximize(grid)[0]
-        r2 = bruteForceMaximize(grid)
-        print r1, r2
