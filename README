@@ -1,0 +1,10 @@
+Author: Matt Johnson <matt@satchamo.com>
+
+Description: Implements the Munkres/Hungarian minimization/maximization 
+algorthim as described here: 
+http://csclab.murraystate.edu/bob.pilgrim/445/munkres.html
+
+This algorthim works on rectangular tables (not just square ones) and tables
+that have multiple solutions
+
+See example.py for usage
